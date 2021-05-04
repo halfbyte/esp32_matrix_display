@@ -20,6 +20,16 @@ My hardware is based on the FC16 module as described [here](https://majicdesigns
 soldered 3 of them together to get a 8x96 dot matrix. I'm using a D1 mini ESP32 board which is a thin wrapper around the ESP-WROOM32 board. Power is delivered via USB. I also 3D printed some mounting brackets,
 all of which I'm planning on documenting here in greater detail later.
 
+## Credits / Dependencies
+
+This builds on top of the following projects:
+
+- Platformio
+- Espressif's ESP32 Arduino core
+- IOTAppStory for updating and wifi config by Andreas Spiess and Onno Dirkzwager
+- (And thus, as a transient dependency AsyncWebServer and AsyncTCP by me-no-dev
+- MD_MAX72XX by MajicDesigns (currently vendored as library is not registered as a PlatformIO library)
+
 ## LICENSE
 
 AGPL 3.0. See [LICENSE.txt](LICENSE.txt)
