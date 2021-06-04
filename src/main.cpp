@@ -33,10 +33,12 @@
 #include <SPIFFS.h>
 
 #include <ESPAsyncWebServer.h>                        // https://github.com/me-no-dev/ESPAsyncWebServer
-#include <FS.h>
+
+
+#define FORMAT_SPIFFS_IF_FAILED true
 
 #define PRINT_CALLBACK  0
-#define DEBUG 1
+#define DEBUG 0
 #define LED_HEARTBEAT 0
 
 #if DEBUG
@@ -75,12 +77,13 @@ MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 AsyncWebServer server(80);
 
 // Global message buffers shared by Wifi and Scrolling functions
-const uint8_t MESG_SIZE = 255;
+const uint16_t MESG_SIZE = 2048;
 const uint8_t CHAR_SPACING = 1;
 const uint8_t SCROLL_DELAY = 75;
 
 char curMessage[MESG_SIZE];
 char newMessage[MESG_SIZE];
+char ipAddress[255];
 bool newMessageAvailable = false;
 
 const char WebPage[] =
@@ -263,6 +266,17 @@ void handleUpdate(AsyncWebServerRequest *request) {
   String message = p->value();
   if (message.length() > 0) {
     message.toCharArray(newMessage, MESG_SIZE);
+    File file = SPIFFS.open("/display.txt", "w");
+    if (file) {
+      if (file.print(newMessage)) {
+        Serial.println("File written");
+      } else {
+        Serial.println("Couldn't write file to flash");
+      }
+      file.close();
+    } else {
+      Serial.println("Opening File failed!");
+    }
     newMessageAvailable = true;
   }
   request->redirect(F("/"));
@@ -279,6 +293,12 @@ void setup()
   pinMode(HB_LED, OUTPUT);
   digitalWrite(HB_LED, LOW);
 #endif
+
+if(!SPIFFS.begin(true)) { 
+  Serial.println("An Error has occurred while mounting SPIFFS");  
+}
+Serial.println(SPIFFS.totalBytes());
+
 
  // creat a unique deviceName for classroom situations (deviceName-123)
 	
@@ -322,9 +342,21 @@ void setup()
   server.begin();
   PRINTS("\nServer started");
 
+  File file = SPIFFS.open("/display.txt", "r");
+  if (file) {
+    Serial.println("Reading File");
+    if(file.available()) {
+      file.readBytes(curMessage, MESG_SIZE);
+    }
+    file.close();    
+
+  } else {
+    Serial.println("Reading file failed");
+  }
+
   // Set up first message as the IP address
-  sprintf(curMessage, "%03d:%03d:%03d:%03d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
-  PRINT("\nAssigned IP ", curMessage);
+  sprintf(ipAddress, "%03d:%03d:%03d:%03d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
+  PRINT("\nAssigned IP ", ipAddress);
 }
 
 void loop()
